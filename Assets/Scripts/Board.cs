@@ -5,6 +5,8 @@ using System;
 using System.Linq;
 using Unity.VisualScripting;
 using TMPro;
+using UnityEditor.Experimental.GraphView;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class Board : MonoBehaviour
 {
@@ -20,7 +22,7 @@ public class Board : MonoBehaviour
 
         for (int i = 0; i < tiles.Length; i++)
         {
-            tiles[i].Reset();
+            tiles[i].RemovePieceFromTile();
         }
     }
 
@@ -50,6 +52,7 @@ public class Board : MonoBehaviour
 
                 CheckForChunkSwaps();
 
+
                 if (CheckGameOver())
                 {
                     ShowGameOverScreen();
@@ -58,103 +61,220 @@ public class Board : MonoBehaviour
         }
     }
 
-    private void CheckForChunkSwaps()
+    private double GetScore()
     {
-        // Filter out occupied tiles
-        List<Tile> occupiedTiles = tiles.Where(tile => tile.IsOccupied()).ToList();
+        double boardScore = 0;
 
-        // Iterate over occupied tiles
-        foreach (Tile currentTile in occupiedTiles)
+        foreach (Tile tile in tiles)
         {
-            // Get coordinates of the current tile
-            int XCoord = currentTile.x;
-            int YCoord = currentTile.y;
-
-            // Check if the current tile is occupied
-            if (!currentTile.IsOccupied())
-            {
-                continue; // Skip to the next iteration if the tile has been emptied out in the process
-            }
-
-            // TODO: implement heuristic for checking if it's a good idea to swap chunks
-
-            // Check left neighbour
-            if (XCoord < 3)
-            {
-                Tile leftNeighbour = tiles[XCoord + 4 * YCoord + 1];
-                if (leftNeighbour.IsOccupied())
-                {
-                    TradeChunks(currentTile, leftNeighbour);
-                }
-            }
-
-            // Check top neighbour
-            if (YCoord < 5)
-            {
-                Tile topNeighbour = tiles[XCoord + 4 * (YCoord + 1)];
-                if (topNeighbour.IsOccupied())
-                {
-                    TradeChunks(currentTile, topNeighbour);
-                }
-            }
+            boardScore += tile.GetScore();
         }
+
+        return boardScore;
     }
 
-
-    private void TradeChunks(Tile tile1, Tile tile2)
+    private Tile GetLeftNeighbor(Tile tile)
     {
-        // Loop until no more swaps can be made
-        bool checkForSwaps;
-        do
+        int XCoord = tile.x;
+        int YCoord = tile.y;
+
+        if (XCoord < 3)
         {
-            // Get the colors of chunks on both tiles
-            List<Color> tile1Chunks = tile1.GetChunksColors();
-            List<Color> tile2Chunks = tile2.GetChunksColors();
+            int neighborIndex = XCoord + 4 * YCoord + 1;
+            return tiles[neighborIndex];
+        }
 
-            // If either tile has reached maximum chunks, exit
-            if (tile1Chunks.Count == 6 || tile2Chunks.Count == 6)
+        return null;
+    }
+
+    private Tile GetTopNeighbor(Tile tile)
+    {
+        int XCoord = tile.x;
+        int YCoord = tile.y;
+
+        if (YCoord < 5)
+        {
+            int neighborIndex = XCoord + 4 * YCoord + 1;
+            return tiles[neighborIndex];
+        }
+
+        return null;
+    }
+
+    private bool CheckIfValidNeighbor(int tileIndex, Vector vec)
+    {
+        int XCoord = tileIndex % 4;
+        int YCoord = tileIndex / 4;
+
+        if (vec.x == 1)
+        {
+            if (XCoord == 3)
             {
-                return;
+                return false;
             }
+        }
 
-            HashSet<Color> tile1ChunksSet = new HashSet<Color>(tile1Chunks);
-            checkForSwaps = false;
-
-            foreach (Color color in tile1ChunksSet)
+        if (vec.x == -1)
+        {
+            if (XCoord == 0)
             {
-                int tile1Count = tile1Chunks.Count(num => num == color);
-                int tile2Count = tile2Chunks.Count(num => num == color);
+                return false;
+            }
+        }
 
-                // If both tiles have chunks of the same color
-                if (tile1Count > 0 && tile2Count > 0)
+        if (vec.y == 1)
+        {
+            if (YCoord == 5)
+            {
+                return false;
+            }
+        }
+
+        if (vec.y == -1)
+        {
+            if (YCoord == 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private int GetPossibleIncomingSwaps(List<Color> tile1ChunksColors, List<Color> tile2ChunksColors, Color color)
+    {
+        int tile1ColorCount = tile1ChunksColors.Count(color1 => color1 == color);
+        int tile2ColorCount = tile2ChunksColors.Count(color1 => color1 == color);
+
+        int exchangeAmount = Mathf.Min(6 - tile1ChunksColors.Count, tile2ColorCount);
+
+        return exchangeAmount;
+    }
+
+    private int GetPossibleOutgoingSwaps(List<Color> tile1ChunksColors, List<Color> tile2ChunksColors, Color color)
+    {
+        int tile1ColorCount = tile1ChunksColors.Count(color1 => color1 == color);
+        int tile2ColorCount = tile2ChunksColors.Count(color1 => color1 == color);
+
+        int exchangeAmount = Mathf.Min(6 - tile2ChunksColors.Count, tile1ColorCount);
+    
+        return exchangeAmount;
+    }
+
+    private double GetPossibleSwapScore(Tile tile1, Tile tile2, Color color, int exchangeAmount)
+    {
+        double tile1Score = tile1.GetScoreWithChunkChange(color, exchangeAmount);
+        double tile2Score = tile2.GetScoreWithChunkChange(color, -exchangeAmount);
+
+        return tile1Score + tile2Score;
+    }
+
+    private ChunkSwap FindBestSwap(int tileIndex)
+    {        
+        ChunkSwap bestSwap = new ChunkSwap();
+        Tile tile1 = tiles[tileIndex];
+
+        if (!tile1.IsOccupied())
+        {
+            return bestSwap;
+        }
+
+        foreach (Vector vec in Constants.directions)
+        {
+            if (CheckIfValidNeighbor(tileIndex, vec))
+            {
+                int neighborIndex = tileIndex + vec.x + vec.y * 4;
+                Tile tile2 = tiles[neighborIndex];
+                
+                List<Color> tile1ChunksColors = tile1.GetChunksColors();
+                List<Color> tile2ChunksColors = tile2.GetChunksColors();
+
+                List<Color> commonColors = tile1ChunksColors.Where(color => tile2ChunksColors.Contains(color)).Distinct().ToList();
+
+                foreach (Color color in commonColors)
                 {
-                    checkForSwaps = true;
+                    int incomingAmount = GetPossibleIncomingSwaps(tile1ChunksColors, tile2ChunksColors, color);
+                    int outgoingAmount = GetPossibleOutgoingSwaps(tile1ChunksColors, tile2ChunksColors, color);
+                    
+                    double incomingScore = GetPossibleSwapScore(tile1, tile2, color, incomingAmount);
+                    double outgoingScore = GetPossibleSwapScore(tile1, tile2, color, -outgoingAmount);
+                    double currentScore = tile1.GetScore() + tile2.GetScore();
 
-                    if (tile1Count >= tile2Count)
+                    // Debug.Log("Incoming amount is " + incomingAmount + " outgoing amount is " + outgoingAmount);
+                    // Debug.Log("Incoming score is " + incomingScore + " outgoing score is " + outgoingScore);
+
+                    double swapScoreGain = 0;
+                    if (incomingScore >= outgoingScore)
                     {
-                        tile1.AddChunk(color);
-                        tile2.RemoveChunk(color);
+                        swapScoreGain = incomingScore - currentScore;
 
-                        // If tile1 becomes unoccupied, increase score
-                        if (!tile1.IsOccupied())
+                        if (swapScoreGain > bestSwap.score)
                         {
-                            IncreaseScore();
+                            bestSwap = new ChunkSwap(swapScoreGain, tile1, tile2, color, incomingAmount);
                         }
                     }
                     else
                     {
-                        tile1.RemoveChunk(color);
-                        tile2.AddChunk(color);
+                        swapScoreGain = outgoingScore - currentScore;
 
-                        // If tile2 becomes unoccupied, increase score
-                        if (!tile2.IsOccupied())
+                        if (swapScoreGain > bestSwap.score)
                         {
-                            IncreaseScore();
+                            bestSwap = new ChunkSwap(swapScoreGain, tile1, tile2, color, - outgoingAmount);
                         }
                     }
                 }
             }
-        } while (checkForSwaps);
+        }
+
+        Debug.Log("Best move is: " + bestSwap.score + " " + bestSwap.tile1 + " " + bestSwap.tile2 + " " + bestSwap.color + " " + bestSwap.amount);
+        
+        return bestSwap;
+    }
+
+    private void CheckForChunkSwaps()
+    {
+        int tileIndex = 0;
+
+        Debug.Log("Start");    
+
+        do
+        {
+            ChunkSwap bestSwap = FindBestSwap(tileIndex);
+
+            if (bestSwap.score > 0)
+            {
+                TradeChunks(bestSwap.tile1, bestSwap.tile2, bestSwap.color, bestSwap.amount);
+                tileIndex = 0;
+            }
+            tileIndex++;
+        } while (tileIndex < Constants.NUMBER_OF_TILES);
+
+        Debug.Log("End"); 
+    }
+
+
+    private void TradeChunks(Tile tile1, Tile tile2, Color color, int amount)
+    {
+        if (amount > 0)
+        {
+            tile1.AddChunk(color, amount);
+            tile2.RemoveChunk(color, amount);
+        }
+        else
+        {
+            tile1.RemoveChunk(color, amount);
+            tile2.AddChunk(color, amount);
+        }
+
+        if (tile1.CheckIfCanBeCleared(color))
+        {
+            tile1.RemovePieceFromTile();
+        }
+
+        if (tile2.CheckIfCanBeCleared(color))
+        {
+            tile2.RemovePieceFromTile();
+        }
     }
 
 
@@ -180,5 +300,33 @@ public class Board : MonoBehaviour
     {
         score += 50;
         scoreText.text = $"Score: {score}";
+    }
+
+    internal class ChunkSwap : IComparable<ChunkSwap>
+    {
+        public double score { get; }
+        public Tile tile1 { get; }
+        public Tile tile2 { get; }
+        public Color color { get; }
+        public int amount { get; }
+
+        public ChunkSwap()
+        {
+            score = 0;
+        }
+
+        public ChunkSwap(double score, Tile tile1, Tile tile2, Color color, int amount)
+        {   
+            this.score  = score;
+            this.tile1  = tile1;
+            this.tile2  = tile2;
+            this.color  = color;
+            this.amount = amount;
+        }
+
+        public int CompareTo(ChunkSwap other)
+        {
+            return other.score.CompareTo(score);
+        }
     }
 }

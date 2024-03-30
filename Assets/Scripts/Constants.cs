@@ -1,6 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public class Vector
+{
+    public int x { get; set; }
+    public int y { get; set; }
+}
+
+
 public static class Constants
 {
     public const string COLOR_RED = "#FF0000";
@@ -16,6 +23,7 @@ public static class Constants
 
     
     public static int MAX_NUMBER_OF_CHUNKS = 6;
+    public static int NUMBER_OF_TILES = 24;
     public static List<Vector3> SPAWN_COORDS = new List<Vector3>
     {
         new Vector3(-4, 0, 0),
@@ -31,4 +39,17 @@ public static class Constants
     public static float MIN_X = 7.2f;
     public static float MIN_Y = 3.6f;
     public static float UNIT = 3.6f;
+
+    public static Vector TOP = new Vector { x = 0, y = 1 };
+    public static Vector BOTTOM = new Vector { x = 0, y = -1 };
+    public static Vector LEFT = new Vector { x = 1, y = 0 };
+    public static Vector RIGHT = new Vector { x = -1, y = 0 };
+
+
+    public static List<Vector> directions = new List<Vector> {
+        TOP,
+        BOTTOM,
+        LEFT,
+        RIGHT
+    };
 }

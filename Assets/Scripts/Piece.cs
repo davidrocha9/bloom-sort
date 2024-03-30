@@ -64,7 +64,7 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
 
     private void GenerateRandomPiece()
     {
-        int numberOfChunks = UnityEngine.Random.Range(1, Constants.MAX_NUMBER_OF_CHUNKS);
+        int numberOfChunks = 2;//UnityEngine.Random.Range(1, Constants.MAX_NUMBER_OF_CHUNKS);
 
         startPosition = rectTransform.anchoredPosition;
 
@@ -123,9 +123,14 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
         {
             if (chunks[i].GetColor() == color)
             {
-                chunks[i].SetColor(Color.white);
+                chunks[i].Clear();
                 break;
             }
         }
+    }
+
+    public bool CheckIfCanBeCleared(Color color)
+    {
+        return chunks.All(chunk => chunk.GetColor() == color);
     }
 }
