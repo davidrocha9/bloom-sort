@@ -27,10 +27,12 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
     private RectTransform rectTransform;
     private Vector3 startPosition;
     private int index = -1;
+    public Animator animator;
     
     void OnValidate()
     {
         rectTransform = GetComponent<RectTransform>();
+        animator = GetComponent<Animator>();
         UpdateChunks();
     }
 
@@ -41,20 +43,14 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
 
     public void Reset()
     {
-        for (int x = 0; x < chunks.Length; x++)
-        {
-            chunks[x].Clear();
-        }
-
-        gameObject.SetActive(false);
+        animator.SetBool("Idle", false);
+        animator.SetBool("Init", false);
     }
 
     public void Init(Vector3 position)
     {
         GenerateRandomPiece();
         rectTransform.anchoredPosition = position;
-
-        gameObject.SetActive(true);
     }
 
     public void SetIndex(int _index)
@@ -64,13 +60,21 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
 
     private void GenerateRandomPiece()
     {
-        int numberOfChunks = 2;//UnityEngine.Random.Range(1, Constants.MAX_NUMBER_OF_CHUNKS);
+        int numberOfChunks = UnityEngine.Random.Range(1, Constants.MAX_NUMBER_OF_CHUNKS);
 
         startPosition = rectTransform.anchoredPosition;
+
+        animator.SetBool("Init", true);
+        animator.SetBool("Idle", false);
 
         for (int x = 0; x < numberOfChunks; x++)
         {
             chunks[x].GenerateRandomChunk();
+        }
+
+        for (int x = numberOfChunks; x < chunks.Length; x++)
+        {
+            chunks[x].SetColor(Color.white);
         }
     }
 
@@ -80,6 +84,8 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
         {
             chunks[x].SetColor(_chunks[x].image.color);
         }
+
+        animator.SetBool("Idle", true);
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -123,7 +129,7 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
         {
             if (chunks[i].GetColor() == color)
             {
-                chunks[i].Clear();
+                chunks[i].SetColor(Color.white);
                 break;
             }
         }
@@ -132,5 +138,11 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
     public bool CheckIfCanBeCleared(Color color)
     {
         return chunks.All(chunk => chunk.GetColor() == color);
+    }
+
+    public void MakeIdle()
+    {
+        animator.SetBool("Init", false);
+        animator.SetBool("Idle", true);
     }
 }

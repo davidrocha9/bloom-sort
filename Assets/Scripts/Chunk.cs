@@ -7,10 +7,11 @@ using UnityEngine.UI;
 public class Chunk : MonoBehaviour
 {
     public Image image;
+    private Transform border;
 
     void OnValidate()
     {
-        image = GetComponent<Image>();
+        border = transform.Find("Border");
     }
     
     private int GenerateRandomColorIndex()
@@ -27,22 +28,22 @@ public class Chunk : MonoBehaviour
         ColorUtility.TryParseHtmlString(Constants.AVAILABLE_COLORS[randomColorIndex], out _color);
 
         SetColor(_color);
-
-        gameObject.SetActive(true);
     }
     
     public void SetColor(Color color)
     {
-        bool shouldBeVisible = color != Color.white;
+        if (color == Color.white)
+        {
+            border.gameObject.SetActive(false);
+            gameObject.SetActive(false);
+        }
+        else
+        {
+            border.gameObject.SetActive(true);
+            gameObject.SetActive(true);
+        }
         
-        gameObject.SetActive(shouldBeVisible);
         image.color = color;
-    }
-
-    public void Clear()
-    {
-        image.color = Color.white;
-        gameObject.SetActive(false);
     }
 
     public bool IsFree()

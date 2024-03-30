@@ -101,45 +101,22 @@ public class Board : MonoBehaviour
         return null;
     }
 
-    private bool CheckIfValidNeighbor(int tileIndex, Vector vec)
+   private bool CheckIfValidNeighbor(int tileIndex, Vector vec)
     {
         int XCoord = tileIndex % 4;
         int YCoord = tileIndex / 4;
 
-        if (vec.x == 1)
-        {
-            if (XCoord == 3)
-            {
-                return false;
-            }
-        }
+        int newX = XCoord + vec.x;
+        int newY = YCoord + vec.y;
 
-        if (vec.x == -1)
+        if (newX < 0 || newX >= 4 || newY < 0 || newY >= 6)
         {
-            if (XCoord == 0)
-            {
-                return false;
-            }
-        }
-
-        if (vec.y == 1)
-        {
-            if (YCoord == 5)
-            {
-                return false;
-            }
-        }
-
-        if (vec.y == -1)
-        {
-            if (YCoord == 0)
-            {
-                return false;
-            }
+            return false;
         }
 
         return true;
     }
+
 
     private int GetPossibleIncomingSwaps(List<Color> tile1ChunksColors, List<Color> tile2ChunksColors, Color color)
     {
@@ -244,7 +221,6 @@ public class Board : MonoBehaviour
             if (bestSwap.score > 0)
             {
                 TradeChunks(bestSwap.tile1, bestSwap.tile2, bestSwap.color, bestSwap.amount);
-                tileIndex = 0;
             }
             tileIndex++;
         } while (tileIndex < Constants.NUMBER_OF_TILES);
@@ -254,7 +230,7 @@ public class Board : MonoBehaviour
 
 
     private void TradeChunks(Tile tile1, Tile tile2, Color color, int amount)
-    {
+    {        
         if (amount > 0)
         {
             tile1.AddChunk(color, amount);
@@ -268,12 +244,12 @@ public class Board : MonoBehaviour
 
         if (tile1.CheckIfCanBeCleared(color))
         {
-            tile1.RemovePieceFromTile();
+            tile1.FreePiece();
         }
 
         if (tile2.CheckIfCanBeCleared(color))
         {
-            tile2.RemovePieceFromTile();
+            tile2.FreePiece();
         }
     }
 

@@ -13,7 +13,6 @@ public class Tile : MonoBehaviour
     public void FillPiece(Chunk[] chunks)
     {
         piece.SetChunks(chunks);
-        piece.gameObject.SetActive(true);
     }
 
     public List<Color> GetChunksColors()
@@ -45,6 +44,12 @@ public class Tile : MonoBehaviour
     private bool CheckIfEmptyPiece()
     {
         return GetChunksColors().Count == 0;
+    }
+
+    public void FreePiece()
+    {
+        //piece.animator.Play("Remove");
+        //RemovePieceFromTile();
     }
 
     public void RemovePieceFromTile()
@@ -88,15 +93,11 @@ public class Tile : MonoBehaviour
     private double CalculateScore(Dictionary<Color, int> colorsDict, int chunkCount)
     {
         double tileScore = 0;
-        int benfica = 0;
-
+        
         foreach (KeyValuePair<Color, int> color in colorsDict)
         {
             tileScore += Math.Pow(10, color.Value);
-            benfica += 1;
         }
-
-        tileScore += Math.Pow(10, 6 - benfica);
 
         tileScore -= chunkCount;
         

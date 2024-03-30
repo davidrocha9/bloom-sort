@@ -43,7 +43,7 @@ public class PieceSpawner : MonoBehaviour
     public void RemovePiece(int pieceIndex)
     {
         pieces[pieceIndex].Reset();
-        
+
         currentNumberOfPieces--;
 
         if (CheckIfPieceHolderEmpty()) {
