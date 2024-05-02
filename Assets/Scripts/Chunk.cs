@@ -4,46 +4,43 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+public class CheckAnimationQueueEventArgs : EventArgs
+{
+}
+
 public class Chunk : MonoBehaviour
 {
     public Image image;
     private Transform border;
+    public Animator animator;
 
     void OnValidate()
     {
         border = transform.Find("Border");
+        animator = GetComponent<Animator>();
     }
-    
+
     private int GenerateRandomColorIndex()
     {
-        return UnityEngine.Random.Range(0, Constants.AVAILABLE_COLORS.Count);
+        return UnityEngine.Random.Range(0, Constants.NUMBER_OF_COLORS);
     }
 
     public void GenerateRandomChunk()
     {
-        Color _color;
-
         int randomColorIndex = GenerateRandomColorIndex();
 
-        ColorUtility.TryParseHtmlString(Constants.AVAILABLE_COLORS[randomColorIndex], out _color);
+        Color _color = Constants.AVAILABLE_COLORS[randomColorIndex];
+
+        //animator.SetBool("Add", true);
+        animator.SetBool("Idle", true);
 
         SetColor(_color);
     }
-    
+
     public void SetColor(Color color)
     {
-        if (color == Color.white)
-        {
-            border.gameObject.SetActive(false);
-            gameObject.SetActive(false);
-        }
-        else
-        {
-            border.gameObject.SetActive(true);
-            gameObject.SetActive(true);
-        }
-        
         image.color = color;
+        animator.SetBool("Idle", color != Color.white);
     }
 
     public bool IsFree()
@@ -54,5 +51,33 @@ public class Chunk : MonoBehaviour
     public Color GetColor()
     {
         return image.color;
+    }
+
+    public void Add(Color color)
+    {
+        SetColor(color);
+        animator.SetBool("Idle", true);
+        transform.parent.SendMessage("ChunkAdded", SendMessageOptions.DontRequireReceiver);
+    }
+
+    public void Remove()
+    {
+        //animator.SetBool("Remove", true);
+        SetColor(Color.white);
+        animator.SetBool("Idle", false);
+        //animator.SetBool("Add", false);
+    }
+
+    public void OnChunkAdded()
+    {
+        //animator.SetBool("Add", false);
+        //animator.SetBool("Idle", true);
+    }
+
+    public void OnChunkRemoved()
+    {
+        //animator.SetBool("Remove", false);
+
+        SetColor(Color.white);
     }
 }

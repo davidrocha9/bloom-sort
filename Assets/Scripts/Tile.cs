@@ -10,7 +10,7 @@ public class Tile : MonoBehaviour
     public Piece piece;
     public int x, y;
 
-    public void FillPiece(Chunk[] chunks)
+    public void FillPiece(List<Color> chunks)
     {
         piece.SetChunks(chunks);
     }
@@ -27,23 +27,12 @@ public class Tile : MonoBehaviour
 
     public void AddChunk(Color color, int amount)
     {
-        for (int i = 0; i < amount; i++)
-        {
-            piece.AddChunk(color);
-        }
+        piece.AddChunk(color, amount);
     }
 
     public void RemoveChunk(Color color, int amount)
     {
-        for (int i = 0; i < amount; i++)
-        {
-            piece.RemoveChunk(color);
-        }
-    }
-
-    private bool CheckIfEmptyPiece()
-    {
-        return GetChunksColors().Count == 0;
+        piece.RemoveChunk(color, amount);
     }
 
     public void FreePiece()
@@ -69,7 +58,7 @@ public class Tile : MonoBehaviour
     {
         List<Color> chunkColors = GetChunksColors();
         Dictionary<Color, int> colorsDict = CountColors(chunkColors);
-    
+
         colorsDict[targetColor] += exchangeAmount;
 
         return CalculateScore(colorsDict, chunkColors.Count + exchangeAmount);
@@ -93,19 +82,19 @@ public class Tile : MonoBehaviour
     private double CalculateScore(Dictionary<Color, int> colorsDict, int chunkCount)
     {
         double tileScore = 0;
-        
+
         foreach (KeyValuePair<Color, int> color in colorsDict)
         {
             tileScore += Math.Pow(10, color.Value);
         }
 
         tileScore -= chunkCount;
-        
+
         return tileScore;
     }
 
-    public bool CheckIfCanBeCleared(Color color)
+    public bool CheckIfCanBeCleared()
     {
-        return piece.CheckIfCanBeCleared(color);
+        return piece.CheckIfCanBeCleared();
     }
 }

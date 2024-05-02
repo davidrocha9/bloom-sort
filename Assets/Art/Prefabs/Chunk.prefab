@@ -87,6 +87,7 @@ GameObject:
   - component: {fileID: 2197000865571925087}
   - component: {fileID: 1645498081958278418}
   - component: {fileID: 2574267693124243342}
+  - component: {fileID: 5949073681557800339}
   m_Layer: 5
   m_Name: Chunk
   m_TagString: Untagged
@@ -165,3 +166,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   image: {fileID: 1645498081958278418}
+--- !u!95 &5949073681557800339
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7173905002421847161}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: f8990595f87da471b9dd92368cc7d8c2, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -8,10 +9,10 @@ public class DropPieceEventArgs : EventArgs
 {
     public float XCoord { get; }
     public float YCoord { get; }
-    public Chunk[] chunks { get; }
+    public List<Color> chunks { get; }
     public int index { get; }
 
-    public DropPieceEventArgs(float _XCoord, float _YCoord, Chunk[] _chunks, int _index)
+    public DropPieceEventArgs(float _XCoord, float _YCoord, List<Color> _chunks, int _index)
     {
         XCoord = _XCoord;
         YCoord = _YCoord;
@@ -23,12 +24,13 @@ public class DropPieceEventArgs : EventArgs
 public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
 {
     public event EventHandler<DropPieceEventArgs> PieceDroppedEvent;
-    private Chunk[] chunks;
+    public Chunk[] chunks;
     private RectTransform rectTransform;
     private Vector3 startPosition;
     private int index = -1;
     public Animator animator;
-    
+    private int amountOfPiecesToBeAdded = 0;
+
     void OnValidate()
     {
         rectTransform = GetComponent<RectTransform>();
@@ -39,6 +41,11 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
     void UpdateChunks()
     {
         chunks = GetComponentsInChildren<Chunk>();
+
+        for (int i = 0; i < chunks.Length; i++)
+        {
+            //chunks[i].FullPieceEvent += OnFullPiece;
+        }
     }
 
     public void Reset()
@@ -64,28 +71,23 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
 
         startPosition = rectTransform.anchoredPosition;
 
-        animator.SetBool("Init", true);
-        animator.SetBool("Idle", false);
-
         for (int x = 0; x < numberOfChunks; x++)
         {
             chunks[x].GenerateRandomChunk();
         }
+    }
 
-        for (int x = numberOfChunks; x < chunks.Length; x++)
+    public void SetChunks(List<Color> _chunks)
+    {
+        for (int x = 0; x < _chunks.Count; x++)
+        {
+            chunks[x].SetColor(_chunks[x]);
+        }
+
+        for (int x = _chunks.Count; x < 6; x++)
         {
             chunks[x].SetColor(Color.white);
         }
-    }
-
-    public void SetChunks(Chunk[] _chunks)
-    {
-        for (int x = 0; x < chunks.Length; x++)
-        {
-            chunks[x].SetColor(_chunks[x].image.color);
-        }
-
-        animator.SetBool("Idle", true);
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -94,13 +96,20 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
     }
 
     public void OnEndDrag(PointerEventData eventData)
-    {   
+    {
         float XCoord = rectTransform.anchoredPosition.x;
         float YCoord = rectTransform.anchoredPosition.y;
 
         rectTransform.anchoredPosition = startPosition;
 
-        PieceDroppedEvent?.Invoke(this, new DropPieceEventArgs(XCoord, YCoord, chunks, index));
+        List<Color> colors = GetChunksColors();
+
+        PieceDroppedEvent?.Invoke(this, new DropPieceEventArgs(XCoord, YCoord, colors, index));
+    }
+
+    public List<Chunk> GetChunks()
+    {
+        return chunks.ToList();
     }
 
     public List<Color> GetChunksColors()
@@ -111,38 +120,76 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
         return colors;
     }
 
-    public void AddChunk(Color color)
+    public void AddChunk(Color color, int amount)
     {
-        for (int i = 0; i < chunks.Length; i++)
+        amountOfPiecesToBeAdded = amount;
+        List<Chunk> targetChunks = chunks.Where(chunk => chunk.GetColor() == Color.white).ToList();
+
+        for (int j = 0; j < amount; j++)
         {
-            if (chunks[i].IsFree())
-            {
-                chunks[i].SetColor(color);
-                break;
-            }
+            targetChunks[j].Add(color);
         }
     }
 
-    public void RemoveChunk(Color color)
+    public void RemoveChunk(Color color, int amount)
     {
-        for (int i = 0; i < chunks.Length; i++)
+        List<Chunk> targetChunks = chunks.Where(chunk => chunk.GetColor() == color).ToList();
+
+        for (int j = 0; j < amount; j++)
         {
-            if (chunks[i].GetColor() == color)
-            {
-                chunks[i].SetColor(Color.white);
-                break;
-            }
+            targetChunks[j].Remove();
         }
     }
 
-    public bool CheckIfCanBeCleared(Color color)
+    public void ChunkAdded()
     {
-        return chunks.All(chunk => chunk.GetColor() == color);
+        amountOfPiecesToBeAdded--;
+        if (amountOfPiecesToBeAdded == 0)
+        {
+            transform.parent.parent.parent.SendMessage("AnimationEnded", SendMessageOptions.DontRequireReceiver);
+        }
+    }
+
+    public bool CheckIfCanBeCleared()
+    {
+        // get list of chunks without color white
+        List<Chunk> coloredChunks = chunks.Where(chunk => chunk.GetColor() != Color.white).ToList();
+
+        return coloredChunks.All(chunk => chunk.GetColor() == chunks[0].GetColor()) && coloredChunks.Count == Constants.MAX_NUMBER_OF_CHUNKS;
     }
 
     public void MakeIdle()
     {
         animator.SetBool("Init", false);
         animator.SetBool("Idle", true);
+    }
+
+    public void RemoveInstantly()
+    {
+        for (int i = 0; i < chunks.Length; i++)
+        {
+            chunks[i].Remove();
+        }
+    }
+
+    public Dictionary<Color, int> GetColorDictionary()
+    {
+        Dictionary<Color, int> colorsDict = new Dictionary<Color, int>();
+
+        foreach (Chunk chunk in chunks)
+        {
+            Color color = chunk.GetColor();
+
+            if (colorsDict.ContainsKey(color))
+            {
+                colorsDict[color]++;
+            }
+            else
+            {
+                colorsDict[color] = 1;
+            }
+        }
+
+        return colorsDict;
     }
 }

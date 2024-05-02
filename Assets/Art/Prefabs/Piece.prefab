@@ -66,7 +66,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2129152489e424861b686bb56c5d7900, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animator: {fileID: 0}
+  animator: {fileID: 1180201193692612538}
 --- !u!58 &-2496735751659393748
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -137,7 +137,7 @@ Animator:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7809686377703402429}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 02206b482a94d44e9a89594dc6d6ed42, type: 2}
   m_CullingMode: 0
