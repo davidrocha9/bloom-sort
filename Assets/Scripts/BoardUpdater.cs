@@ -172,17 +172,6 @@ public class BoardUpdater
             updatedBoard[i + vec.i][j + vec.j][Color.white] = amount;
         }
 
-        /*if (CheckIfFullPiece(updatedBoard, i, j))
-        {
-            updatedBoard = ClearPiece(updatedBoard, i, j);
-        }
-
-        if (CheckIfFullPiece(updatedBoard, i + vec.i, j + vec.j))
-        {
-            updatedBoard = ClearPiece(updatedBoard, i + vec.i, j + vec.j);
-        }*/
-
-        // Remove keys with value 0
         updatedBoard[i][j] = updatedBoard[i][j].Where(kv => kv.Value != 0).ToDictionary(kv => kv.Key, kv => kv.Value);
         updatedBoard[i + vec.i][j + vec.j] = updatedBoard[i + vec.i][j + vec.j].Where(kv => kv.Value != 0).ToDictionary(kv => kv.Key, kv => kv.Value);
 
@@ -300,6 +289,11 @@ public class BoardUpdater
         while (bestNode.Depth > 0)
         {
             ChunkTradeAnimation animation = new ChunkTradeAnimation(bestNode);
+
+            if (animation.AddClearAnimation > 0)
+            {
+                animations.Add(new ChunkTradeAnimation(animation));
+            }
 
             if (animation.Changes.Count > 0)
             {

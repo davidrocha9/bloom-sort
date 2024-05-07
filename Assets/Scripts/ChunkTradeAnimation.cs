@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class ChunkTradeAnimation
@@ -6,6 +8,8 @@ public class ChunkTradeAnimation
     public List<(int, int)> Changes = new List<(int, int)>();
     public int Amount { get; }
     public Color Color { get; }
+
+    public int AddClearAnimation = -1;
 
     public ChunkTradeAnimation(BoardNode node)
     {
@@ -24,11 +28,29 @@ public class ChunkTradeAnimation
 
                     if (amountDiff != 0)
                     {
-                        Changes.Add((4 * i + j, amountDiff));
                         Color = kvp.Key;
+                        Changes.Add((4 * i + j, amountDiff));
                     }
                 }
             }
         }
+
+        if (CheckIfPieceRemoval())
+        {
+            Changes[0] = (Changes[0].Item1, -Changes[1].Item2);
+            AddClearAnimation = Changes[0].Item1;
+        }
+    }
+
+    public ChunkTradeAnimation(ChunkTradeAnimation anim)
+    {
+        Changes.Add((anim.AddClearAnimation, -Constants.MAX_NUMBER_OF_CHUNKS));
+        Amount = anim.Amount;
+        Color = anim.Color;
+    }
+
+    private bool CheckIfPieceRemoval()
+    {
+        return Changes.Count > 0 && Changes[0].Item2 < 0 && Changes[1].Item2 < 0;
     }
 }

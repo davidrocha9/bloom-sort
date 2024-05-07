@@ -41,17 +41,6 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
     void UpdateChunks()
     {
         chunks = GetComponentsInChildren<Chunk>();
-
-        for (int i = 0; i < chunks.Length; i++)
-        {
-            //chunks[i].FullPieceEvent += OnFullPiece;
-        }
-    }
-
-    public void Reset()
-    {
-        animator.SetBool("Idle", false);
-        animator.SetBool("Init", false);
     }
 
     public void Init(Vector3 position)
@@ -81,12 +70,12 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
     {
         for (int x = 0; x < _chunks.Count; x++)
         {
-            chunks[x].SetColor(_chunks[x]);
+            chunks[x].AddInstantly(_chunks[x]);
         }
 
         for (int x = _chunks.Count; x < 6; x++)
         {
-            chunks[x].SetColor(Color.white);
+            chunks[x].AddInstantly(Color.white);
         }
     }
 
@@ -146,29 +135,22 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
         amountOfPiecesToBeAdded--;
         if (amountOfPiecesToBeAdded == 0)
         {
-            transform.parent.parent.parent.SendMessage("AnimationEnded", SendMessageOptions.DontRequireReceiver);
+            transform.parent.parent.parent.SendMessage(EventConstants.ANIMATION_ENDED, SendMessageOptions.DontRequireReceiver);
         }
     }
 
     public bool CheckIfCanBeCleared()
     {
-        // get list of chunks without color white
         List<Chunk> coloredChunks = chunks.Where(chunk => chunk.GetColor() != Color.white).ToList();
 
         return coloredChunks.All(chunk => chunk.GetColor() == chunks[0].GetColor()) && coloredChunks.Count == Constants.MAX_NUMBER_OF_CHUNKS;
-    }
-
-    public void MakeIdle()
-    {
-        animator.SetBool("Init", false);
-        animator.SetBool("Idle", true);
     }
 
     public void RemoveInstantly()
     {
         for (int i = 0; i < chunks.Length; i++)
         {
-            chunks[i].Remove();
+            chunks[i].RemoveInstantly();
         }
     }
 
@@ -191,5 +173,13 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
         }
 
         return colorsDict;
+    }
+
+    public void Reset()
+    {
+        foreach (Chunk chunk in chunks)
+        {
+            chunk.Reset();
+        }
     }
 }

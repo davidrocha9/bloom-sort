@@ -1,9 +1,6 @@
-using System;
-using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-using Unity.VisualScripting;
 
 public class Board : MonoBehaviour
 {
@@ -20,17 +17,6 @@ public class Board : MonoBehaviour
         boardUpdater = new BoardUpdater();
 
         pieceSpawner.DropPieceEvent += OnPieceDropped;
-
-        for (int i = 0; i < tiles.Length; i++)
-        {
-            if (tiles[i].IsOccupied())
-            {
-                foreach (Chunk chunk in tiles[i].piece.chunks)
-                {
-                    chunk.animator.SetBool("Idle", true);
-                }
-            }
-        }
     }
 
     private bool CheckIfCoordsAreInBounds(float XCoord, float YCoord)
@@ -60,6 +46,7 @@ public class Board : MonoBehaviour
                 animations = boardUpdater.GetChunkTradingAnimations(tileIndex, GetBoardDict());
                 PlayAnimationFromQueue();
 
+                // TODO: Fix animations and re-implement game over checks
                 /*if (CheckGameOver())
                 {
                     ShowGameOverScreen();
@@ -103,7 +90,7 @@ public class Board : MonoBehaviour
 
             row.Add(dic);
 
-            if (row.Count == 4)
+            if (row.Count == BoardConstants.NUMBER_OF_COLUMNS)
             {
                 board.Add(row);
                 row = new List<Dictionary<Color, int>>();
@@ -146,8 +133,9 @@ public class Board : MonoBehaviour
     {
         if (animations.Count > 0)
         {
-            ChunkTradeAnimation animation = animations[animations.Count - 1];
-            animations.RemoveAt(animations.Count - 1);
+            int targetIndex = animations.Count - 1;
+            ChunkTradeAnimation animation = animations[targetIndex];
+            animations.RemoveAt(targetIndex);
 
             List<(int, int)> changes = animation.Changes;
             Color color = animation.Color;
@@ -165,34 +153,6 @@ public class Board : MonoBehaviour
                     targetTile.RemoveChunk(color, -change.Item2);
                 }
             }
-        }
-    }
-
-    internal class ChunkSwap : IComparable<ChunkSwap>
-    {
-        public double score { get; }
-        public Tile tile1 { get; }
-        public Tile tile2 { get; }
-        public Color color { get; }
-        public int amount { get; }
-
-        public ChunkSwap()
-        {
-            score = 0;
-        }
-
-        public ChunkSwap(double score, Tile tile1, Tile tile2, Color color, int amount)
-        {
-            this.score = score;
-            this.tile1 = tile1;
-            this.tile2 = tile2;
-            this.color = color;
-            this.amount = amount;
-        }
-
-        public int CompareTo(ChunkSwap other)
-        {
-            return other.score.CompareTo(score);
         }
     }
 }

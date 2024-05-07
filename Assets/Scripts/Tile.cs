@@ -10,6 +10,11 @@ public class Tile : MonoBehaviour
     public Piece piece;
     public int x, y;
 
+    public void Reset()
+    {
+        piece.Reset();
+    }
+
     public void FillPiece(List<Color> chunks)
     {
         piece.SetChunks(chunks);
@@ -33,12 +38,6 @@ public class Tile : MonoBehaviour
     public void RemoveChunk(Color color, int amount)
     {
         piece.RemoveChunk(color, amount);
-    }
-
-    public void FreePiece()
-    {
-        //piece.animator.Play("Remove");
-        //RemovePieceFromTile();
     }
 
     public void RemovePieceFromTile()

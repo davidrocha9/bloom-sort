@@ -1,23 +1,21 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-
-public class CheckAnimationQueueEventArgs : EventArgs
-{
-}
 
 public class Chunk : MonoBehaviour
 {
     public Image image;
-    private Transform border;
     public Animator animator;
 
     void OnValidate()
     {
-        border = transform.Find("Border");
         animator = GetComponent<Animator>();
+    }
+
+    public void Reset()
+    {
+        animator.SetBool(AnimationConstants.ADD, false);
+        animator.SetBool(AnimationConstants.IDLE, false);
+        animator.SetBool(AnimationConstants.REMOVE, false);
     }
 
     private int GenerateRandomColorIndex()
@@ -31,16 +29,12 @@ public class Chunk : MonoBehaviour
 
         Color _color = Constants.AVAILABLE_COLORS[randomColorIndex];
 
-        //animator.SetBool("Add", true);
-        animator.SetBool("Idle", true);
-
-        SetColor(_color);
+        AddInstantly(_color);
     }
 
     public void SetColor(Color color)
     {
         image.color = color;
-        animator.SetBool("Idle", color != Color.white);
     }
 
     public bool IsFree()
@@ -53,30 +47,49 @@ public class Chunk : MonoBehaviour
         return image.color;
     }
 
+    // Add and Remove are used for pieces that should be animated (board pieces)
     public void Add(Color color)
     {
         SetColor(color);
-        animator.SetBool("Idle", true);
-        transform.parent.SendMessage("ChunkAdded", SendMessageOptions.DontRequireReceiver);
+        if (color != Color.white) animator.SetBool(AnimationConstants.ADD, true);
     }
 
     public void Remove()
     {
-        //animator.SetBool("Remove", true);
+        animator.SetBool(AnimationConstants.REMOVE, true);
+    }
+
+    // AddInstantly and RemoveInstantly are used for pieces that should not be animated (pieces placed by the player)
+    public void AddInstantly(Color color)
+    {
+        SetColor(color);
+        if (color != Color.white) animator.SetBool(AnimationConstants.IDLE, true);
+    }
+
+    public void RemoveInstantly()
+    {
         SetColor(Color.white);
-        animator.SetBool("Idle", false);
-        //animator.SetBool("Add", false);
+        animator.SetBool(AnimationConstants.IDLE, false);
+    }
+
+    public void SetIdle(bool isIdle)
+    {
+        animator.SetBool(AnimationConstants.IDLE, isIdle);
     }
 
     public void OnChunkAdded()
     {
-        //animator.SetBool("Add", false);
-        //animator.SetBool("Idle", true);
+        animator.SetBool(AnimationConstants.ADD, false);
+        animator.SetBool(AnimationConstants.IDLE, true);
+
+        transform.parent.SendMessage(EventConstants.CHUNK_ADDED, SendMessageOptions.DontRequireReceiver);
     }
 
     public void OnChunkRemoved()
     {
-        //animator.SetBool("Remove", false);
+        animator.SetBool(AnimationConstants.IDLE, false);
+        animator.SetBool(AnimationConstants.ADD, false);
+        animator.SetBool(AnimationConstants.REMOVE, false);
 
         SetColor(Color.white);
     }
