@@ -182,4 +182,19 @@ public class Piece : MonoBehaviour, IDragHandler, IEndDragHandler
             chunk.Reset();
         }
     }
+
+    public void UpdateChunks(Dictionary<Color, int> newChunks)
+    {
+        int currIdx = 0;
+        // iterate newChunks keys
+        foreach (Color color in newChunks.Keys)
+        {
+            int amountOfChunks = newChunks[color];
+            for (int i = 0; i < amountOfChunks; i++)
+            {
+                chunks[currIdx].AddInstantly(color);
+                currIdx++;
+            }
+        }
+    }
 }

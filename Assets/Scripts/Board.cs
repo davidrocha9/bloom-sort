@@ -43,11 +43,21 @@ public class Board : MonoBehaviour
                 chosenTileToDropPiece.FillPiece(chunks);
                 pieceSpawner.RemovePiece(e.index);
 
-                animations = boardUpdater.GetChunkTradingAnimations(tileIndex, GetBoardDict());
+                List<List<Dictionary<Color, int>>> newBoard = boardUpdater.GetChunkTradingAnimations(tileIndex, GetBoardDict());
+
+                for (int i = 0; i < newBoard.Count; i++)
+                {
+                    for (int j = 0; j < newBoard[i].Count; j++)
+                    {
+                        tiles[i * 4 + j].UpdateChunks(newBoard[i][j]);
+                    }
+                }
+
+                /*animations = boardUpdater.GetChunkTradingAnimations(tileIndex, GetBoardDict());
                 PlayAnimationFromQueue();
 
                 // TODO: Fix animations and re-implement game over checks
-                /*if (CheckGameOver())
+                if (CheckGameOver())
                 {
                     ShowGameOverScreen();
                 }*/

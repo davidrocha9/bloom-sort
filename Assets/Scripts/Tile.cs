@@ -96,4 +96,9 @@ public class Tile : MonoBehaviour
     {
         return piece.CheckIfCanBeCleared();
     }
+
+    public void UpdateChunks(Dictionary<Color, int> newChunks)
+    {
+        piece.UpdateChunks(newChunks);
+    }
 }

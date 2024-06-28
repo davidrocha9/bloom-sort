@@ -63,7 +63,7 @@ public class Chunk : MonoBehaviour
     public void AddInstantly(Color color)
     {
         SetColor(color);
-        if (color != Color.white) animator.SetBool(AnimationConstants.IDLE, true);
+        animator.SetBool(AnimationConstants.IDLE, color != Color.white);
     }
 
     public void RemoveInstantly()

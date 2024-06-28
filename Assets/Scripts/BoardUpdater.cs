@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http.Headers;
-using Unity.Collections;
 using UnityEngine;
 
 public class BoardEqualityComparer : IEqualityComparer<BoardNode>
@@ -103,16 +101,14 @@ public class BoardNode
     private double CalculateScore()
     {
         double boardScore = 0.0;
-
         foreach (var row in Board)
         {
             foreach (var tile in row)
             {
-                double score = 0;
                 foreach (var kvp in tile)
                 {
-                    score -= Math.Exp(kvp.Value);
-                    if (kvp.Key != Color.white) boardScore -= Math.Exp(6 - kvp.Value);
+                    if (kvp.Key == Color.white) continue;
+                    boardScore -= Math.Exp(6 - kvp.Value);
                 }
             }
         }
@@ -204,20 +200,13 @@ public class BoardUpdater
             int amountOfFreeSpaceInTile2 = tile2ints.ContainsKey(Color.white) ? tile2ints[Color.white] : 0;
 
             int incomingExchangeAmount = Math.Min(amountOfFreeSpaceInTile1, amountOfintInTile2);
-            //int outgoingExchangeAmount = -Math.Min(amountOfFreeSpaceInTile2, amountOfintInTile1);
+            int outgoingExchangeAmount = -Math.Min(amountOfFreeSpaceInTile2, amountOfintInTile1);
 
             List<List<Dictionary<Color, int>>> incomingBoard = GetUpdatedBoardWithTrade(i, j, vec, board, incomingExchangeAmount, color);
-            //List<List<Dictionary<Color, int>>> outgoingBoard = GetUpdatedBoardWithTrade(i, j, vec, board, outgoingExchangeAmount, color);
+            List<List<Dictionary<Color, int>>> outgoingBoard = GetUpdatedBoardWithTrade(i, j, vec, board, outgoingExchangeAmount, color);
 
-            if (incomingExchangeAmount > 0)
-            {
-                GetPossibleMoves(incomingBoard, i, j, currentNode);
-                GetPossibleMoves(board, i + vec.i, j + vec.j, currentNode);
-            }
-            /*if (outgoingExchangeAmount < 0)
-            {
-                //GetPossibleMoves(outgoingBoard, i, j, vec, outgoingExchangeAmount, color, currentNode);
-            }*/
+            GetPossibleMoves(incomingBoard, i, j, currentNode);
+            GetPossibleMoves(outgoingBoard, i + vec.i, j + vec.j, currentNode);
         }
     }
 
@@ -238,12 +227,13 @@ public class BoardUpdater
 
     public void GetPossibleMoves(List<List<Dictionary<Color, int>>> board, int i, int j, BoardNode parent = null)
     {
+        var currentNode = new BoardNode(board, parent, parent?.Depth + 1 ?? 0, i, j);
+
         if (CheckIfFullPiece(board, i, j))
         {
             ClearPiece(board, i, j);
         }
 
-        var currentNode = new BoardNode(board, parent, parent?.Depth + 1 ?? 0, i, j);
         if (!visited.Add(currentNode))
         {
             return;
@@ -273,7 +263,7 @@ public class BoardUpdater
         return bestNode;
     }
 
-    public List<ChunkTradeAnimation> GetChunkTradingAnimations(int tileIndex, List<List<Dictionary<Color, int>>> board)
+    public List<List<Dictionary<Color, int>>> GetChunkTradingAnimations(int tileIndex, List<List<Dictionary<Color, int>>> board)
     {
         visited.Clear();
 
@@ -286,7 +276,9 @@ public class BoardUpdater
 
         BoardNode bestNode = GetBestNode();
 
-        while (bestNode.Depth > 0)
+        return bestNode.Board;
+
+        /*while (bestNode.Depth > 0)
         {
             ChunkTradeAnimation animation = new ChunkTradeAnimation(bestNode);
 
@@ -303,6 +295,23 @@ public class BoardUpdater
             bestNode = bestNode.Parent;
         }
 
-        return new List<ChunkTradeAnimation>(animations);
+        return new List<ChunkTradeAnimation>(animations);*/
+    }
+
+    // For testing purposes
+    public List<List<Dictionary<Color, int>>> GestBestBoard(int tileIndex, List<List<Dictionary<Color, int>>> board)
+    {
+        visited.Clear();
+
+        int IVal = tileIndex / 4;
+        int JVal = tileIndex % 4;
+
+        GetPossibleMoves(board, IVal, JVal, null);
+
+        List<ChunkTradeAnimation> animations = new List<ChunkTradeAnimation>();
+
+        BoardNode bestNode = GetBestNode();
+
+        return bestNode.Board;
     }
 }
